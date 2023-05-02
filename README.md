@@ -6,7 +6,7 @@ O projeto consiste em um sistema de ___decisão___ e ___movimentação___ que é
 
 # Configuração
 A configuração do sistema é formada por dois nós ___ROS___:
-* ___/pilot___ que é responsável pela movimentação do drone.
+* ___/robocin_pilot___ que é responsável pela movimentação do drone.
 * ___/camera_feed___ que é responsável pelo processamento da imagem da câmera do drone.
 
 # Execução
@@ -27,6 +27,6 @@ mavproxy.py --master tcp:127.0.0.1:5760 --out 127.0.0.1:14550 --out 127.0.0.1:14
 # Abrir outro terminal na pasta "camera_feed" e rodar o "/camera_feed"
 ./camera_feed.py
 
-# Por fim, abrir outro terminal na pasta "robocin_pilot" e rodar o "/pilot"
+# Por fim, abrir outro terminal na pasta "robocin_pilot" e rodar o "/robocin_pilot"
 ./robocin_pilot.py
 ```
