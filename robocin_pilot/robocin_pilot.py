@@ -37,7 +37,7 @@ def send_velocity_cmd(velocity_x, velocity_y, velocity_z, duration):
 class PilotNode(Node):
     def __init__(self):
         # Initialize node
-        super().__init__("pilot")
+        super().__init__("robocin_pilot")
         
         # Node attributes
         self.line_color = "GREEN"
