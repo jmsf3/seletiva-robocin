@@ -1,0 +1,5 @@
+Para que o Gazebo consiga acessar os modelos e textura, a pasta "quadrado" deve estar em ~/.gazebo/models
+
+O arquivo quadrado_seletiva.world pode estar em qualquer lugar, mas uma sugestão é o colocar em ~/.gazebo/world
+
+Para abrir o gazebo neste mundo, basta rodar: gazebo --verbose quadrado_seletiva.world
