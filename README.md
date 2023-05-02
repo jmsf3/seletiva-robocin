@@ -1,16 +1,16 @@
 # Seletiva-RobôCIn
-Este repositório contém o projeto desenvolvido para o processo seletivo da equipe de drones do ___[RobôCIn](https://robocin.com.br/)___, que abrange as áreas de ___decisão___ e ___movimentação___.
+Este repositório contém o projeto desenvolvido para o processo seletivo da equipe de drones do __[RobôCIn](https://robocin.com.br/)__, que abrange as áreas de __decisão__ e __movimentação__.
 
 # Sobre
-O projeto consiste em um sistema de ___decisão___ e ___movimentação___ que é capaz de guiar um ___drone autônomo___, equipado com uma câmera ___RGB___ que aponta para o solo, através de um trajeto na forma de um quadrado com os lados coloridos em cores distintas. O drone passa por cada um dos cantos do quadrado uma única vez antes de retornar à posição inicial, onde deve realizar o seu pouso.
+O projeto consiste no desenvolvimento de um sistema capaz de guiar um __drone__ __autônomo__, equipado com uma câmera __RGB__, por um trajeto na forma de um quadrado, cujos lados possuem cores distintas. O drone deve levantar voo no canto inferior esquerdo do quadrado e passar pelos quatro cantos apenas uma vez, antes de retornar à posição inicial para realizar o pouso.
 
 # Configuração
-A configuração do sistema é formada por dois nós ___ROS___:
-* ___/robocin_pilot___ que é responsável pela movimentação do drone.
-* ___/camera_feed___ que é responsável pelo processamento da imagem da câmera do drone.
+A configuração do sistema desenvolvido é formada por dois nós __ROS__:
+* __/robocin_pilot__ que é responsável pela movimentação do drone.
+* __/camera_feed__ que é responsável pela captação e pelo processamento das imagens do drone.
 
 # Execução
-Após realizar o ___[setup](https://bymateus.notion.site/Software-Setup-b3f9eecaa44946b0a59bfc81c0adb44e)___ do ambiente, para executar o sistema bastar fazer o seguinte:
+Após realizar o __[setup](https://bymateus.notion.site/Software-Setup-b3f9eecaa44946b0a59bfc81c0adb44e)__ do ambiente, para executar o sistema bastar fazer o seguinte:
 
 ```
 # Abrir o QGroundControl
