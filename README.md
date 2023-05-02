@@ -22,7 +22,7 @@ gazebo --verbose quadrado_seletiva_gazebo.world
 sim_vehicle.py -v ArduCopter -f gazebo-iris --no-mavproxy
 
 # Abrir outro terminal e rodar o MAVProxy
-mavproxy.py --master tcp:127.0.0.1:5760 --out 127.0.0.1:14550 --out 127.0.0.1:14551 # com isso, o QGC irá conectar
+mavproxy.py --master tcp:127.0.0.1:5760 --out 127.0.0.1:14550 --out 127.0.0.1:14551
 
 # Abrir outro terminal na pasta "camera_feed" e rodar o "/camera_feed"
 ./camera_feed.py
