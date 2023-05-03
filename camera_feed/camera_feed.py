@@ -6,21 +6,17 @@ from math import sqrt, floor
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 
-# Constants
 R = 0
 G = 1
 B = 2
-
-COLORS = {
-    "RED": (218, 2, 11),
-    "GREEN": (0, 218, 26),
-    "BLUE": (2, 53, 218),
-    "PINK": (218, 2, 202),
-    "WHITE": (218, 218, 218),
-}
+RANGE = 75
+COLORS = {"RED": (218, 2, 11), "GREEN": (0, 218, 26), "BLUE": (2, 53, 218), "PINK": (218, 2, 202), "WHITE": (218, 218, 218)}
 
 
 def detect_color(r, g, b):
+    """
+    Identify a color as RED, GREEN, BLUE, PINK or WHITE based on it's RGB values.
+    """
     result = None
     min_distance = None
     
@@ -41,7 +37,7 @@ class CameraFeedNode(Node):
         super().__init__("camera_feed")
         
         # Create ROS publisher
-        self.camera_publisher = self.create_publisher(String, "/line_color", 10)
+        self.camera_publisher = self.create_publisher(String, "/movement", 10)
         
         # Create ROS subscriber
         self.camera_subscriber = self.create_subscription(Image, "/camera/image_raw", self.camera_callback, 10)
@@ -52,19 +48,28 @@ class CameraFeedNode(Node):
         width = msg.width
         height = msg.height
         
-        # Calculate the (r, g, b) values for the center pixel
-        center_pixel = int((3 * (height ** 2) / 2) + (3 * width / 2))
-        r = image[center_pixel + R]
-        g = image[center_pixel + G]
-        b = image[center_pixel + B]
+        # Calculate theleft and right side colors relative to the image's center
+        center = 3 * width * (height // 2) + 3 * (width // 2)
         
-        # Detect the line's color
-        line_color = String()
-        line_color.data = detect_color(r, g, b)
+        left = center - 3 * RANGE
+        left_color = detect_color(image[left + R], image[left + G], image[left + B])
         
+        right = center + 3 * RANGE
+        right_color = detect_color(image[right + R], image[right + G], image[right + B])
+        
+        # Define movement
+        movement = String()
+        
+        if left_color == right_color == "WHITE":
+            movement.data = "MOVE_FORWARD"
+        elif left_color == "WHITE" and right_color != "WHITE":
+            movement.data = "TURN_RIGHT"
+        elif left_color != "WHITE" and right_color == "WHITE":
+            movement.data = "TURN_LEFT"
+      
         # Publish
-        self.camera_publisher.publish(line_color)
-        self.get_logger().info(f"({r}, {g}, {b}) -> {line_color.data}")
+        self.camera_publisher.publish(movement)
+        self.get_logger().info(f"MOVEMENT: {movement.data}")
 
 
 # Initialize rclpy
