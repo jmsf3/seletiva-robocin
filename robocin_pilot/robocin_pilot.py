@@ -5,46 +5,72 @@ import time
 import rclpy
 from rclpy import Future
 from rclpy.node import Node
+from pymavlink import mavutil
 from std_msgs.msg import String
-from dronekit import connect, mavutil, VehicleMode
+from dronekit import connect, VehicleMode
 
-# Constants
-CMD_DURATION = 0.01 # s
-GROUND_ALTITUDE = 0.1 # m
-TARGET_ALTITUDE = 2.0 # m
-VEHICLE_VELOCITY = 1.0 # m / s
+LONG_DURATION = 3.0 # s
+STOP_DURATION = 1.0 # s
+SHORT_DURATION = 0.01 # s
+TARGET_ALTITUDE = 2.00 # m
+VEHICLE_VELOCITY = 0.75 # m/s
 
 
-def send_velocity_cmd(velocity_x, velocity_y, velocity_z, duration):
+def send_velocity_cmd(velocity_x, velocity_y, velocity_z):
     """
     Move vehicle in direction based on specified velocity vectors.
     """
     msg = vehicle.message_factory.set_position_target_local_ned_encode(
         0,       # time_boot_ms (not used)
         0, 0,    # target system, target component
-        mavutil.mavlink.MAV_FRAME_LOCAL_NED, # frame
+        mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
         0b0000111111000111, # type_mask (only speeds enabled)
         0, 0, 0, # x, y, z positions (not used)
         velocity_x, velocity_y, velocity_z, # x, y, z velocity in m/s
         0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
-        0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
+        90, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 
-    # Send command to vehicle
+    # send command to vehicle
     vehicle.send_mavlink(msg)
-    time.sleep(duration)
-        
 
+
+def condition_yaw(heading, clockwise=True, relative=True):
+    """
+    Change vehicle's yaw based on a heading value.
+    """
+    if relative:
+        is_relative=1 #yaw relative to direction of travel
+    else:
+        is_relative=0 #yaw is an absolute angle
+        
+    if clockwise:
+        direction=1 #clockwise direction
+    else:
+        direction=-1 #counterclockwise direction
+        
+    # create the CONDITION_YAW command using command_long_encode()
+    msg = vehicle.message_factory.command_long_encode(
+        0, 0,    # target system, target component
+        mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
+        0, #confirmation
+        heading,    # param 1, yaw in degrees
+        0,          # param 2, yaw speed deg/s
+        direction,          # param 3, direction -1 ccw, 1 cw
+        is_relative, # param 4, relative offset 1, absolute angle 0
+        0, 0, 0)    # param 5 ~ 7 not used
+    
+    # send command to vehicle
+    vehicle.send_mavlink(msg)
+
+        
 class PilotNode(Node):
     def __init__(self):
         # Initialize node
         super().__init__("robocin_pilot")
-        
-        # Node attributes
-        self.line_color = "GREEN"
-        self.previous_line_color = "GREEN"
+        self.amount_of_turns = 0
         
         # Create ROS subscriber
-        self.line_color_subscriber = self.create_subscription(String, "/line_color", self.line_color_callback, 10)
+        self.movement_subscriber = self.create_subscription(String, "/movement", self.movement_callback, 10)
         
         # Don't try to arm until autopilot is ready
         self.get_logger().info("Basic pre-arm checks.")
@@ -66,44 +92,76 @@ class PilotNode(Node):
         self.get_logger().info("Taking off!")
         vehicle.simple_takeoff(TARGET_ALTITUDE)
         time.sleep(5)
-    
-    def line_color_callback(self, msg: String):
-        # Update line color
-        if (msg.data != "WHITE"):
-            self.previous_line_color = self.line_color
-            self.line_color = msg.data
         
-        # If vehicle is on endpoint start descent
-        if self.line_color == "GREEN" and self.previous_line_color == "RED":
-            self.get_logger().info("Starting descent...")
+        # Move forward
+        self.get_logger().info("Moving forward...")
+        send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
+        condition_yaw(0)
+        time.sleep(LONG_DURATION)
+         
+    def movement_callback(self, msg: String):
+        movement = msg.data
+        
+        if self.amount_of_turns == 4:
+            # Stop
+            send_velocity_cmd(0.0, 0.0, 0.0)
+            condition_yaw(0)
+            time.sleep(STOP_DURATION)
             
-            while (vehicle.location.global_relative_frame.alt > GROUND_ALTITUDE):
-                send_velocity_cmd(0.0, 0.0, VEHICLE_VELOCITY, CMD_DURATION)
+            # Start descent
+            self.get_logger().info("Starting descent...")
+            vehicle.mode = VehicleMode("LAND")
+            time.sleep(5 * LONG_DURATION)
 
+            # Finish descent
             future.set_result(True)
             self.get_logger().info("Vehicle landed successfully!")
-            
-        # If the line is green move forward
-        elif self.line_color == "GREEN":
-            self.get_logger().info("Moving forward...")
-            send_velocity_cmd(-VEHICLE_VELOCITY, 0.0, 0.0, CMD_DURATION)
-
-        # If the line is blue move rightward
-        elif self.line_color == "BLUE":
-            self.get_logger().info("Moving rightward...")
-            send_velocity_cmd(0.0, -VEHICLE_VELOCITY, 0.0, CMD_DURATION)
-
-        # If the line is pink move backward
-        elif self.line_color == "PINK":
-            self.get_logger().info("Moving backward...")
-            send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0, CMD_DURATION)
-
-        # If the line is red move leftward
-        elif self.line_color == "RED":
-            self.get_logger().info("Moving leftward...")
-            send_velocity_cmd(0.0, VEHICLE_VELOCITY, 0.0, CMD_DURATION)
-            
         
+        elif movement == "MOVE_FORWARD":
+            # Move forward
+            send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
+            condition_yaw(0)
+            time.sleep(SHORT_DURATION)
+
+        elif movement == "TURN_RIGHT":
+            # Stop
+            send_velocity_cmd(0.0, 0.0, 0.0)
+            condition_yaw(0)
+            time.sleep(STOP_DURATION)
+                      
+            # Turn right
+            self.get_logger().info("Turning right...")
+            condition_yaw(90)
+            self.amount_of_turns += 1
+            time.sleep(LONG_DURATION)
+            
+            if self.amount_of_turns < 4:
+                # Move forward
+                self.get_logger().info("Moving forward...")
+                send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
+                condition_yaw(0)
+                time.sleep(LONG_DURATION)
+        
+        elif movement == "TURN_LEFT":
+            # Stop
+            send_velocity_cmd(0.0, 0.0, 0.0)
+            condition_yaw(0)
+            time.sleep(STOP_DURATION)
+                      
+            # Turn left
+            self.get_logger().info("Turning left...")
+            condition_yaw(90, clockwise=False)
+            self.amount_of_turns += 1
+            time.sleep(LONG_DURATION)
+            
+            if self.amount_of_turns < 4:
+                # Move forward
+                self.get_logger().info("Moving forward...")
+                send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
+                condition_yaw(0)
+                time.sleep(LONG_DURATION)
+
+           
 # Connect to the vehicle
 connection_string = "127.0.0.1:14550"
 vehicle = connect(connection_string, wait_ready=True)
