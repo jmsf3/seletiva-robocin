@@ -30,3 +30,5 @@ mavproxy.py --master tcp:127.0.0.1:5760 --out 127.0.0.1:14550 --out 127.0.0.1:14
 # Por fim, abrir outro terminal na pasta "robocin_pilot" e rodar o "/robocin_pilot"
 ./robocin_pilot.py
 ```
+
+[video_seletiva.webm](https://user-images.githubusercontent.com/128498401/236322877-6d0a0f83-4886-420d-aa8f-81267ef92117.webm)
