@@ -6,6 +6,7 @@ from math import sqrt, floor
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 
+# Constants
 R = 0
 G = 1
 B = 2
