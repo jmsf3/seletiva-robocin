@@ -9,6 +9,7 @@ from pymavlink import mavutil
 from std_msgs.msg import String
 from dronekit import connect, VehicleMode
 
+# Constants
 LONG_DURATION = 3.0 # s
 STOP_DURATION = 1.0 # s
 SHORT_DURATION = 0.01 # s
@@ -95,71 +96,81 @@ class PilotNode(Node):
         
         # Move forward
         self.get_logger().info("Moving forward...")
+        self.move_forward(LONG_DURATION)
+        
+    def stop(self):
+        # Stop
+        send_velocity_cmd(0.0, 0.0, 0.0)
+        condition_yaw(0)
+        time.sleep(STOP_DURATION)
+    
+    def land(self):
+        # Start descent
+        self.get_logger().info("Starting descent...")
+        vehicle.mode = VehicleMode("LAND")
+        time.sleep(5 * LONG_DURATION)
+
+        # Finish descent
+        future.set_result(True)
+        self.get_logger().info("Vehicle landed successfully!")
+        
+    def move_forward(self, duration):
+        # Move forward
         send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
         condition_yaw(0)
+        time.sleep(duration)
+
+    def turn_right(self):
+        # Turn right
+        self.get_logger().info("Turning right...")
+        condition_yaw(90)
+        self.amount_of_turns += 1
         time.sleep(LONG_DURATION)
-         
+
+    def turn_left(self):
+        # Turn left
+        self.get_logger().info("Turning left...")
+        condition_yaw(90, clockwise=False)
+        self.amount_of_turns += 1
+        time.sleep(LONG_DURATION)
+    
     def movement_callback(self, msg: String):
         movement = msg.data
         
         if self.amount_of_turns == 4:
             # Stop
-            send_velocity_cmd(0.0, 0.0, 0.0)
-            condition_yaw(0)
-            time.sleep(STOP_DURATION)
+            self.stop()
             
-            # Start descent
-            self.get_logger().info("Starting descent...")
-            vehicle.mode = VehicleMode("LAND")
-            time.sleep(5 * LONG_DURATION)
-
-            # Finish descent
-            future.set_result(True)
-            self.get_logger().info("Vehicle landed successfully!")
+            # Land
+            self.land()
         
         elif movement == "MOVE_FORWARD":
             # Move forward
-            send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
-            condition_yaw(0)
-            time.sleep(SHORT_DURATION)
+            self.move_forward(SHORT_DURATION)
 
         elif movement == "TURN_RIGHT":
             # Stop
-            send_velocity_cmd(0.0, 0.0, 0.0)
-            condition_yaw(0)
-            time.sleep(STOP_DURATION)
+            self.stop()
                       
             # Turn right
-            self.get_logger().info("Turning right...")
-            condition_yaw(90)
-            self.amount_of_turns += 1
-            time.sleep(LONG_DURATION)
+            self.turn_right()
             
             if self.amount_of_turns < 4:
                 # Move forward
                 self.get_logger().info("Moving forward...")
-                send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
-                condition_yaw(0)
-                time.sleep(LONG_DURATION)
+                self.move_forward(LONG_DURATION)
         
         elif movement == "TURN_LEFT":
             # Stop
-            send_velocity_cmd(0.0, 0.0, 0.0)
-            condition_yaw(0)
-            time.sleep(STOP_DURATION)
+            self.stop
                       
             # Turn left
-            self.get_logger().info("Turning left...")
-            condition_yaw(90, clockwise=False)
-            self.amount_of_turns += 1
-            time.sleep(LONG_DURATION)
+            self.turn_left()
             
             if self.amount_of_turns < 4:
                 # Move forward
                 self.get_logger().info("Moving forward...")
-                send_velocity_cmd(VEHICLE_VELOCITY, 0.0, 0.0)
-                condition_yaw(0)
-                time.sleep(LONG_DURATION)
+                self.move_forward(LONG_DURATION)
 
            
 # Connect to the vehicle
