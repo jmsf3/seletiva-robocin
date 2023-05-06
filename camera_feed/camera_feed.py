@@ -49,7 +49,7 @@ class CameraFeedNode(Node):
         width = msg.width
         height = msg.height
         
-        # Calculate theleft and right side colors relative to the image's center
+        # Calculate the left and right side colors relative to the image's center
         center = 3 * width * (height // 2) + 3 * (width // 2)
         
         left = center - 3 * RANGE
