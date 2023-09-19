@@ -174,7 +174,7 @@ class PilotNode(Node):
 
            
 # Connect to the vehicle
-connection_string = "127.0.0.1:14550"
+connection_string = "127.0.0.1:14551"
 vehicle = connect(connection_string, wait_ready=True)
 
 # Initialize rclpy
