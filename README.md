@@ -1,4 +1,4 @@
-# Seletiva-RobôCIn
+# Seletiva RobôCIn
 Este repositório contém o projeto desenvolvido para o processo seletivo da equipe de drones do __[RobôCIn](https://robocin.com.br/)__, que abrange as áreas de __decisão__ e __movimentação__.
 
 # Sobre
